@@ -2,6 +2,9 @@ const btnActive = document.getElementById('active');
 const btnClean = document.getElementById('clean');
 const selectedColor = document.getElementById('selectColor');
 
+const defineTextButton = JSON.parse(localStorage.getItem(`mark`));
+setText(defineTextButton);
+
 const active = (args) =>{
   const reset = (oldOrNew) => {
     const resetColor = JSON.parse(localStorage.getItem(`mark/${oldOrNew}`));
@@ -10,7 +13,13 @@ const active = (args) =>{
       searchP[resetColor.id].style.backgroundColor = resetColor.color;
     }
   }
-  
+
+  const activeItem = JSON.parse(localStorage.getItem(`mark/old`));
+  if(activeItem){
+    activeItem.active = true;
+    localStorage.setItem(`mark/old`, JSON.stringify(activeItem));
+  }
+
   let paragraphs = [];
   let pageParagraphs = document.querySelectorAll('p');
   let page = document.querySelector('body');
@@ -25,48 +34,52 @@ const active = (args) =>{
   });
 
   const listenerClick = (e) => {    
-    x = e.clientX;
-    y = e.clientY;
-    marcked = document.elementFromPoint(x, y);
+    const verifyActived = JSON.parse(localStorage.getItem(`mark/old`));
+    if(verifyActived == undefined || verifyActived.active) {   
 
-    if(marcked.tagName !== 'P'){
-      return
-    }
+      x = e.clientX;
+      y = e.clientY;
+      marcked = document.elementFromPoint(x, y);
 
-    reset('old');
-
-    paragraphs.forEach(p => {
-      if(p.tagP.innerHTML == marcked.innerHTML){
-        const oldColor = {
-          id : p.id,
-          pagP : marcked,
-          color : marcked.style.backgroundColor,
-        }
-        
-        localStorage.setItem(`mark/old`, JSON.stringify(oldColor));      
-        marcked.style.backgroundColor = args.color;
-
-        const currentColor = {
-          id : p.id,
-          pagP : marcked,
-          color : marcked.style.backgroundColor
-        }
-        localStorage.setItem(`mark/current`, JSON.stringify(currentColor));
+      if(marcked.tagName !== 'P'){
+        return
       }
-    });
+
+      reset('old');
+
+      paragraphs.forEach(p => {
+        if(p.tagP.innerHTML == marcked.innerHTML){
+          const oldColor = {
+            id : p.id,
+            pagP : marcked,
+            color : marcked.style.backgroundColor,
+            active : true
+          }
+          
+          localStorage.setItem(`mark/old`, JSON.stringify(oldColor));      
+          marcked.style.backgroundColor = args.color;
+
+          const currentColor = {
+            id : p.id,
+            pagP : marcked,
+            color : marcked.style.backgroundColor
+          }
+          localStorage.setItem(`mark/current`, JSON.stringify(currentColor));
+        }
+      });
+    }
   };
   
-  if(args.actived){
-    page.addEventListener('click', listenerClick);
-  }
-  else{
-    page.removeEventListener('click', listenerClick);
-  
-    const resetColor = JSON.parse(localStorage.getItem(`mark/old`));
-    if(resetColor){
-      let searchP = document.querySelectorAll('p');
-      searchP[resetColor.id].style.backgroundColor = resetColor.color;
-    }
+  page.addEventListener('click', listenerClick);
+}
+
+const desactive = () =>{
+  const resetColor = JSON.parse(localStorage.getItem(`mark/old`));
+  if(resetColor){
+    resetColor.active = false;
+    let searchP = document.querySelectorAll('p');
+    searchP[resetColor.id].style.backgroundColor = resetColor.color;
+    localStorage.setItem(`mark/old`, JSON.stringify(resetColor))
   }
 }
 
@@ -83,15 +96,16 @@ const clean = () => {
   
 }
 
-
 btnActive.addEventListener('click', async (e) =>{
   const isActive = btnActive.innerText  === "Ativar";
+  
+  localStorage.setItem(`mark`, JSON.stringify(isActive));
 
   const [tab] = await chrome.tabs.query({ active : true, currentWindow : true });
 
   chrome.scripting.executeScript({
     target : { tabId : tab.id },
-    function : active,
+    function : isActive ? active : desactive,
     args : [{
       color : selectedColor.value,
       actived : isActive
@@ -99,7 +113,7 @@ btnActive.addEventListener('click', async (e) =>{
   });
 
   
-  btnActive.innerText = isActive ? "Desativar" : "Ativar";
+  setText(isActive);
 });
 
 btnClean.addEventListener('click', async (e) =>{
@@ -110,4 +124,8 @@ btnClean.addEventListener('click', async (e) =>{
     args : []
   });
 
-})
+});
+
+function setText(actived){
+  btnActive.innerText = actived ? "Desativar" : "Ativar";
+}
