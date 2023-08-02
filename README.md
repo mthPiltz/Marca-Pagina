@@ -17,3 +17,14 @@
 <p align="center">
   <img src = "images/for-readme/principal.png">
 </p>
+
+# Como se instala?
+
+1. Acesse o caminho `chrome://extensions` no Google Chrome
+2. Habilite a opção de Modo do desenvolvedor
+3. Clique em "Carregar sem compactação"
+4. Selecione a pasta da extensão
+
+<p align="center">
+  <img src = "images/for-readme/tutorial1.png">
+</p>
